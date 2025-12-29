@@ -2,6 +2,7 @@ import struct
 import sys
 from typing import List, Dict, Any
 
+
 def parse_mbr_complete(data: bytes, filename: str) -> Dict[str, Any]:
     if len(data) != 512:
         return {"error": f"Некорректный размер MBR: {len(data)} байт (должно быть 512)"}
@@ -40,6 +41,7 @@ def parse_mbr_complete(data: bytes, filename: str) -> Dict[str, Any]:
     result["hex_dump"] = create_hex_dump(data)
     return result
 
+
 def parse_boot_code(boot_code: bytes) -> List[str]:
     analysis: List[str] = []
 
@@ -65,6 +67,7 @@ def parse_boot_code(boot_code: bytes) -> List[str]:
     zero_bytes = sum(1 for b in boot_code if b == 0)
     analysis.append(f"Статистика: {zero_bytes}/446 нулевых байтов ({zero_bytes / 446 * 100:.1f}%)")
     return analysis
+
 
 def parse_partition_table(table_data: bytes) -> List[Dict[str, Any]]:
     partitions: List[Dict[str, Any]] = []
@@ -136,6 +139,7 @@ def parse_partition_table(table_data: bytes) -> List[Dict[str, Any]]:
         partitions.append(partition)
     return partitions
 
+
 def parse_signature(signature: bytes) -> List[str]:
     analysis: List[str] = []
     b1, b2 = signature[0], signature[1]
@@ -155,6 +159,7 @@ def parse_signature(signature: bytes) -> List[str]:
 
     return analysis
 
+
 def extract_strings(data: bytes, min_len: int = 4) -> List[str]:
     strings: List[str] = []
     current: List[str] = []
@@ -170,6 +175,7 @@ def extract_strings(data: bytes, min_len: int = 4) -> List[str]:
     if len(current) >= min_len:
         strings.append("".join(current))
     return strings
+
 
 def create_hex_dump(data: bytes) -> List[Dict[str, Any]]:
     dump: List[Dict[str, Any]] = []
@@ -193,6 +199,7 @@ def create_hex_dump(data: bytes) -> List[Dict[str, Any]]:
             "section": section,
         })
     return dump
+
 
 def print_mbr_analysis(result: Dict[str, Any]) -> None:
     print("=" * 70)
@@ -275,6 +282,7 @@ def print_mbr_analysis(result: Dict[str, Any]) -> None:
     print("      Сигнатура: 2 байта (0.4%)")
     print("      Всего: 512 байт (100%)")
 
+
 def run_on_file(filename: str) -> None:
     try:
         print(" Загрузка и анализ MBR...")
@@ -304,17 +312,24 @@ def run_on_file(filename: str) -> None:
     print(" Анализ завершен!")
     print("=" * 70)
 
+
 def main() -> None:
-    if len(sys.argv) >= 2:
-        filename = sys.argv[1].strip('"')
-    else:
-        filename = input("Введите путь к файлу дампа MBR: ").strip().strip('"')
+    while True:
+        if len(sys.argv) >= 2:
+            filename = sys.argv[1].strip('"')
+        else:
+            filename = input("Введите путь к файлу дампа MBR (или 'exit' для выхода): ").strip().strip('"')
+        
+        if filename.lower() in ['exit', 'quit', 'выход']:
+            print("Программа завершена.")
+            break
+        
+        if not filename:
+            print("Путь к файлу не указан. Попробуйте снова.")
+            continue
+        
+        run_on_file(filename)
 
-    if not filename:
-        print("Путь к файлу не указан.")
-        sys.exit(1)
-
-    run_on_file(filename)
 
 if __name__ == "__main__":
     main()
